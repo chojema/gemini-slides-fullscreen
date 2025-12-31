@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Fullscreen SlideShow for Gemini Canvas HTML Slides</title>
+  <style>
+    :root {
+      --bg: #0a1628;
+      --bg-gradient-1: rgba(30, 58, 138, 0.15);
+      --bg-gradient-2: rgba(67, 56, 202, 0.12);
+      --panel: #0f1b35;
+      --panel2: #0d1529;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #3b82f6;
+      --accent2: #6366f1;
+      --border: rgba(148, 163, 184, 0.15);
+      --success: #10b981;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      background: radial-gradient(ellipse 1400px 900px at 25% 15%, var(--bg-gradient-1), transparent 65%),
+                  radial-gradient(ellipse 1400px 900px at 75% 70%, var(--bg-gradient-2), transparent 65%),
+                  var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 32px 20px 80px 20px;
+      position: relative;
+    }
+    .container {
+      width: min(1000px, 100%);
+      background: rgba(15, 27, 53, 0.95);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 20px 70px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(59, 130, 246, 0.1);
+      overflow: hidden;
+      backdrop-filter: blur(20px);
+    }
+    header {
+      padding: 24px 28px 20px 28px;
+      border-bottom: 1px solid var(--border);
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(99, 102, 241, 0.08));
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+    }
+    .header-content {
+      flex: 1;
+    }
+    header h1 {
+      margin: 0 0 8px 0;
+      font-size: 20px;
+      letter-spacing: -0.3px;
+      font-weight: 600;
+    }
+    header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .lang-switch {
+      display: flex;
+      gap: 4px;
+      background: rgba(15, 23, 42, 0.6);
+      padding: 4px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+    .lang-btn {
+      padding: 6px 12px;
+      font-size: 13px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      border-radius: 7px;
+      transition: all 180ms ease;
+      font-weight: 500;
+    }
+    .lang-btn.active {
+      background: var(--accent);
+      color: white;
+    }
+    .lang-btn:not(.active):hover {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+    }
+    main {
+      padding: 28px;
+      display: grid;
+      gap: 20px;
+    }
+    .dropzone {
+      border: 2px dashed rgba(148, 163, 184, 0.35);
+      border-radius: 16px;
+      padding: 24px 20px;
+      background: rgba(30, 58, 138, 0.25);
+      display: grid;
+      gap: 12px;
+      text-align: center;
+      transition: all 220ms ease;
+    }
+    .dropzone.dragover {
+      border-color: var(--accent);
+      background: rgba(59, 130, 246, 0.1);
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    }
+    .row {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    button, .btn {
+      appearance: none;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      border-radius: 11px;
+      padding: 11px 18px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 1;
+      transition: all 180ms ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+    button:hover, .btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(148, 163, 184, 0.35);
+      transform: translateY(-1px);
+    }
+    button:active, .btn:active {
+      transform: translateY(0);
+    }
+    input[type="file"] {
+      display: none;
+    }
+    .muted {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .results {
+      display: grid;
+      gap: 12px;
+      margin-top: 8px;
+    }
+    .card {
+      border: 1px solid var(--border);
+      background: rgba(13, 21, 41, 0.55);
+      border-radius: 14px;
+      padding: 18px 20px;
+      display: grid;
+      gap: 10px;
+      transition: all 180ms ease;
+    }
+    .card:hover {
+      background: rgba(13, 21, 41, 0.75);
+      border-color: rgba(148, 163, 184, 0.25);
+    }
+    .card .top {
+      display: flex;
+      gap: 12px;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+    }
+    .card .name {
+      font-weight: 600;
+      font-size: 15px;
+      word-break: break-all;
+    }
+    .badge {
+      font-size: 12px;
+      font-weight: 600;
+      color: white;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      background: rgba(16, 185, 129, 0.15);
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+    .badge.no-change {
+      border-color: rgba(148, 163, 184, 0.4);
+      background: rgba(148, 163, 184, 0.15);
+    }
+    .small {
+      font-size: 13px;
+      color: var(--muted);
+      word-break: break-word;
+    }
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 18px 28px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    code {
+      background: rgba(255, 255, 255, 0.08);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      color: var(--accent);
+    }
+    .page-footer {
+      position: fixed;
+      bottom: 20px;
+      right: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+      color: var(--muted);
+      background: rgba(15, 27, 53, 0.85);
+      padding: 10px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      backdrop-filter: blur(10px);
+    }
+    .social-links {
+      display: flex;
+      gap: 8px;
+    }
+    .social-link {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      color: var(--text);
+      text-decoration: none;
+      transition: all 180ms ease;
+    }
+    .social-link:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+    .social-link svg {
+      width: 16px;
+      height: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="header-content">
+        <h1 data-i18n="title">Gemini Canvas HTML 슬라이드를 위한 전체 화면 슬라이드 쇼 변환기</h1>
+        <p data-i18n="description">
+          HTML 파일을 드래그해서 넣거나 파일 선택으로 넣으면, "전체 화면으로 슬라이드 쇼" 기능을 추가한 뒤 수정된 파일의 다운로드 링크를 제공합니다.
+        </p>
+        <ul style="margin: 8px 0 0 0; padding-left: 20px; color: var(--muted); font-size: 13px; line-height: 1.7;">
+          <li data-i18n="desc-item1">원본 파일은 Gemini Canvas에서 작성한 슬라이드 부분만 추출한 HTML 파일이어야 합니다. (참고: 별도 안내)</li>
+          <li data-i18n="desc-item2">원본 파일이나 변환한 파일의 HTML 소스에서 내용 수정이 가능합니다.</li>
+          <li data-i18n="desc-item3">변환한 파일로 '전체 화면으로 슬라이드 쇼'를 진행할 수 있습니다.</li>
+        </ul>
+      </div>
+      <div class="lang-switch">
+        <button class="lang-btn active" data-lang="ko">한국어</button>
+        <button class="lang-btn" data-lang="en">English</button>
+      </div>
+    </header>
+
+    <main>
+      <div id="dropzone" class="dropzone" aria-label="드래그앤드롭 영역">
+        <div class="muted" data-i18n="dropzone-text">여기에 HTML 파일을 드래그해서 넣기</div>
+        <div class="row">
+          <label class="btn" for="fileInput" data-i18n="select-file">파일 선택</label>
+          <input id="fileInput" type="file" accept=".html,text/html" multiple />
+        </div>
+        <div class="muted">
+          <span data-i18n="output-rule">출력 파일명 규칙:</span> <code data-i18n="output-example">원본 파일명-SlideShow.html</code>
+        </div>
+      </div>
+
+      <div>
+        <div class="muted" data-i18n="conversion-results">변환 결과</div>
+        <div id="results" class="results"></div>
+      </div>
+    </main>
+
+    <footer data-i18n="privacy-notice">
+      파일 처리는 로컬에서만 이루어집니다. 원본 파일은 서버 등 외부로 전송되지 않습니다.
+    </footer>
+  </div>
+
+  <div class="page-footer">
+    <span>Chulwoo Park, <span id="current-year"></span>.</span>
+    <div class="social-links">
+      <a href="https://cantips.com" target="_blank" rel="noopener noreferrer" class="social-link" title="Blog">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+        </svg>
+      </a>
+      <a href="https://youtube.com/@cantips" target="_blank" rel="noopener noreferrer" class="social-link" title="YouTube">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+        </svg>
+      </a>
+    </div>
+  </div>
+
+  <!-- Injection snippets stored in templates to avoid </script> parsing issues -->
+  <template id="tpl-fullscreen-button"><button id="fullscreen-slideshow" class="absolute top-4 right-20 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm px-3 py-2 rounded-full shadow-md text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white transition-all duration-300 z-20 border-none cursor-pointer text-sm font-medium font-sans">
+  전체 화면으로 슬라이드 쇼
+</button>
+</template>
+  <template id="tpl-fullscreen-style"><style id="slideshow-fullscreen-style">
+/* Added by SlideShow Modifier */
+#fullscreen-slideshow { white-space: nowrap; }
+body.slideshow-fullscreen { background-color: #000 !important; }
+body.slideshow-fullscreen #slideshow-holder { padding: 0 !important; }
+body.slideshow-fullscreen #slideshow-wrapper { border-radius: 0 !important; box-shadow: none !important; }
+body.slideshow-fullscreen #nav-controls { display: none !important; }
+body.slideshow-fullscreen #theme-toggle { display: none !important; }
+/* In fullscreen, clicks should not select text */
+body.slideshow-fullscreen { user-select: none; -webkit-user-select: none; }
+</style>
+</template>
+  <template id="tpl-fullscreen-script"><script id="slideshow-fullscreen-script">
+(function () {
+  'use strict';
+  if (window.__fullscreenSlideshowInjected) return;
+  window.__fullscreenSlideshowInjected = true;
+
+  function byId(id) { return document.getElementById(id); }
+  function isFullscreen() { return !!document.fullscreenElement; }
+
+  function computeAndApplyScale() {
+    const wrapper = byId('slideshow-wrapper');
+    const holder = byId('slideshow-holder');
+    if (!wrapper || !holder) return;
+
+    const baseWidth = 1280;
+    const baseHeight = 720;
+
+    const availableWidth = holder.clientWidth || window.innerWidth;
+    const availableHeight = holder.clientHeight || window.innerHeight;
+
+    const scaleX = availableWidth / baseWidth;
+    const scaleY = availableHeight / baseHeight;
+
+    const finalScale = Math.min(scaleX, scaleY);
+    wrapper.style.setProperty('--scale-factor', finalScale);
+  }
+
+  async function enterFullscreen() {
+    const target = byId('slideshow-holder') || document.documentElement;
+    if (!target.requestFullscreen) return;
+
+    try {
+      await target.requestFullscreen({ navigationUI: 'hide' });
+    } catch (e) {
+      try { await target.requestFullscreen(); } catch (e2) { /* ignore */ }
+    }
+  }
+
+  function exitFullscreen() {
+    if (!document.exitFullscreen) return;
+    try { document.exitFullscreen(); } catch (e) { /* ignore */ }
+  }
+
+  function showNextSlide() {
+    const nextBtn = byId('next-slide');
+    if (nextBtn) nextBtn.click();
+  }
+
+  function onFullscreenChange() {
+    const on = isFullscreen();
+    document.body.classList.toggle('slideshow-fullscreen', on);
+    if (on) {
+      computeAndApplyScale();
+    } else {
+      setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 0);
+    }
+  }
+
+  function onKeydown(e) {
+    if (!isFullscreen()) return;
+    const key = e.key;
+    const code = e.code;
+
+    if (key === 'Enter' || key === ' ' || code === 'Space') {
+      e.preventDefault();
+      showNextSlide();
+    }
+  }
+
+  function onClick(e) {
+    if (!isFullscreen()) return;
+    if (e.button !== 0) return;
+    if (e.target && e.target.closest) {
+      if (e.target.closest('#fullscreen-slideshow')) return;
+    }
+    showNextSlide();
+  }
+
+  function wire() {
+    const btn = byId('fullscreen-slideshow');
+    if (btn) {
+      btn.addEventListener('click', function () {
+        if (isFullscreen()) exitFullscreen();
+        else enterFullscreen();
+      });
+    }
+
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    document.addEventListener('keydown', onKeydown, true);
+    document.addEventListener('click', onClick, true);
+    window.addEventListener('resize', function () { if (isFullscreen()) computeAndApplyScale(); });
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire);
+  else wire();
+})();
+</script>
+</template>
+
+<script>
+(function () {
+  'use strict';
+
+  // Internationalization
+  const translations = {
+    ko: {
+      title: 'Gemini Canvas HTML 슬라이드를 위한 전체 화면 슬라이드 쇼 변환기',
+      description: 'HTML 파일을 드래그해서 넣거나 파일 선택으로 넣으면, "전체 화면으로 슬라이드 쇼" 기능을 추가한 뒤 수정된 파일의 다운로드 링크를 제공합니다.',
+      'desc-item1': '원본 파일은 Gemini Canvas에서 작성한 슬라이드 부분만 추출한 HTML 파일이어야 합니다. (참고: 별도 안내)',
+      'desc-item2': '원본 파일이나 변환한 파일의 HTML 소스에서 내용 수정이 가능합니다.',
+      'desc-item3': '변환한 파일로 \'전체 화면으로 슬라이드 쇼\'를 진행할 수 있습니다.',
+      'dropzone-text': '여기에 HTML 파일을 드래그해서 넣기',
+      'select-file': '파일 선택',
+      'output-rule': '출력 파일명 규칙:',
+      'output-example': '원본 파일명-SlideShow.html',
+      'conversion-results': '변환 결과',
+      'privacy-notice': '파일 처리는 로컬에서만 이루어집니다. 원본 파일은 서버 등 외부로 전송되지 않습니다.',
+      'badge-converted': '변환 완료',
+      'badge-already': '변환 불필요',
+      'output-filename': '출력 파일명:',
+      'download': '다운로드'
+    },
+    en: {
+      title: 'Fullscreen Slideshow Converter for Gemini Canvas HTML Slides',
+      description: 'Drag and drop or select HTML files to add fullscreen slideshow functionality and download the modified files.',
+      'desc-item1': 'The original file must be an HTML file containing only the slide portion extracted from Gemini Canvas. (Refer to separate instructions)',
+      'desc-item2': 'You can edit the content in the HTML source of the original or converted file.',
+      'desc-item3': 'You can run a fullscreen slideshow with the converted file.',
+      'dropzone-text': 'Drag and drop HTML files here',
+      'select-file': 'Select Files',
+      'output-rule': 'Output filename rule:',
+      'output-example': 'original-filename-SlideShow.html',
+      'conversion-results': 'Conversion Results',
+      'privacy-notice': 'All file processing is done locally. Your original files are never sent to external servers.',
+      'badge-converted': 'Converted',
+      'badge-already': 'Already Converted',
+      'output-filename': 'Output filename:',
+      'download': 'Download'
+    }
+  };
+
+  let currentLang = 'ko';
+
+  function updateLanguage(lang) {
+    currentLang = lang;
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (translations[lang] && translations[lang][key]) {
+        el.textContent = translations[lang][key];
+      }
+    });
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-lang') === lang);
+    });
+  }
+
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      updateLanguage(btn.getAttribute('data-lang'));
+    });
+  });
+
+  // Set current year
+  document.getElementById('current-year').textContent = new Date().getFullYear();
+
+  const SENTINEL = "id=\"slideshow-fullscreen-script\"";
+
+  const tplBtn = document.getElementById('tpl-fullscreen-button');
+  const tplStyle = document.getElementById('tpl-fullscreen-style');
+  const tplScript = document.getElementById('tpl-fullscreen-script');
+
+  const fullscreenButtonHtml = (tplBtn ? tplBtn.innerHTML.trim() : '');
+  const fullscreenStyle = (tplStyle ? tplStyle.innerHTML.trim() : '');
+  const fullscreenScript = (tplScript ? tplScript.innerHTML.trim() : '');
+
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const results = document.getElementById('results');
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function deriveOutputName(originalName) {
+    const name = originalName || 'output.html';
+    const idx = name.toLowerCase().lastIndexOf('.html');
+    if (idx !== -1) return name.slice(0, idx) + '-SlideShow.html';
+    return name + '-SlideShow.html';
+  }
+
+  function transformHtml(htmlText) {
+    if (htmlText.includes(SENTINEL)) {
+      return { ok: true, changed: false, html: htmlText };
+    }
+
+    let out = htmlText;
+    let changed = false;
+
+    // 1) Insert button before theme-toggle
+    const themeIdx = out.search(/<button\s+id="theme-toggle"\b/);
+    if (themeIdx >= 0) {
+      out = out.slice(0, themeIdx) + fullscreenButtonHtml + "\n" + out.slice(themeIdx);
+      changed = true;
+    } else {
+      out = out.replace(/(<body\b[^>]*>)/i, '$1\n' + fullscreenButtonHtml + "\n");
+      changed = true;
+    }
+
+    // 2) Inject style before </head>
+    if (!out.includes('id="slideshow-fullscreen-style"')) {
+      if (/<\/head>/i.test(out)) {
+        out = out.replace(/<\/head>/i, "\n" + fullscreenStyle + "\n</head>");
+      } else {
+        out = fullscreenStyle + "\n" + out;
+      }
+      changed = true;
+    }
+
+    // 3) Inject script before </body>
+    if (!out.includes(SENTINEL)) {
+      if (/<\/body>/i.test(out)) {
+        out = out.replace(/<\/body>/i, "\n" + fullscreenScript + "\n</body>");
+      } else {
+        out = out + "\n" + fullscreenScript;
+      }
+      changed = true;
+    }
+
+    return { ok: true, changed, html: out };
+  }
+
+  function addResultCard({ fileName, outputName, ok, changed, url }) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    const badgeText = changed ? translations[currentLang]['badge-converted'] : translations[currentLang]['badge-already'];
+    const badgeClass = changed ? '' : ' no-change';
+
+    card.innerHTML = `
+      <div class="top">
+        <div class="name">${escapeHtml(fileName)}</div>
+        <div class="badge${badgeClass}">${badgeText}</div>
+      </div>
+      <div class="small">${translations[currentLang]['output-filename']} ${escapeHtml(outputName)}</div>
+      ${url ? `<a class="btn" href="${url}" download="${escapeHtml(outputName)}">${translations[currentLang]['download']}</a>` : ''}
+    `;
+    results.prepend(card);
+  }
+
+  async function handleFiles(fileList) {
+    const files = Array.from(fileList || []);
+    for (const file of files) {
+      try {
+        const text = await file.text();
+        const transformed = transformHtml(text);
+        const outputName = deriveOutputName(file.name);
+
+        const blob = new Blob([transformed.html], { type: 'text/html;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+
+        addResultCard({
+          fileName: file.name,
+          outputName,
+          ok: true,
+          changed: transformed.changed,
+          url
+        });
+      } catch (err) {
+        console.error('File processing error:', err);
+      }
+    }
+  }
+
+  function setDragOver(on) {
+    dropzone.classList.toggle('dragover', on);
+  }
+
+  dropzone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    setDragOver(true);
+  });
+  dropzone.addEventListener('dragleave', () => setDragOver(false));
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    setDragOver(false);
+    if (e.dataTransfer && e.dataTransfer.files) {
+      handleFiles(e.dataTransfer.files);
+    }
+  });
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files) handleFiles(fileInput.files);
+    fileInput.value = '';
+  });
+})();
+</script>
+</body>
+</html>
